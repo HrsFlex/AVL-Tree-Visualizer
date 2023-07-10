@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AVL Tree Visualization By HRS</title>
+    
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="icon" href="/favicon.ico">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Merriweather&family=Montserrat&family=Sacramento&display=swap" rel="stylesheet">
+    
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.12.9/dist/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    
+   
+    
+</head>
+
+<body>
+    <h1>AVL Tree Visualization by HRS </h1>
+    <form id="inputForm">
+        <label for="values">Enter values (comma-separated):</label>
+        <input type="text" id="values" required>
+        <button type="submit">Generate AVL Tree</button>
+    </form>
+    <canvas id="canvas" width="800" height="500"></canvas>
+
+    <script>
+        // AVL tree node class
+        class Node {
+            constructor(value) {
+                this.value = value;
+                this.left = null;
+                this.right = null;
+                this.height = 1;
+            }
+        }
+
+        // AVL tree visualization class
+        class AVLTreeVisualization {
+            constructor() {
+                this.canvas = document.getElementById("canvas");
+                this.context = this.canvas.getContext("2d");
+                this.root = null;
+            }
+
+            // Function to calculate the height of a node
+            height(node) {
+                if (node === null) {
+                    return 0;
+                }
+                return node.height;
+            }
+
+            // Function to calculate the balance factor of a node
+            balanceFactor(node) {
+                if (node === null) {
+                    return 0;
+                }
+                return this.height(node.left) - this.height(node.right);
+            }
+
+            // Function to update the height of a node
+            updateHeight(node) {
+                if (node === null) {
+                    return;
+                }
+                node.height = 1 + Math.max(this.height(node.left), this.height(node.right));
+            }
+
+            // Function to rotate a node to the right
+            rotateRight(node) {
+                const newRoot = node.left;
+                const newRootRight = newRoot.right;
+
+                // Perform rotation
+                newRoot.right = node;
+                node.left = newRootRight;
+
+                // Update heights
+                this.updateHeight(node);
+                this.updateHeight(newRoot);
+
+                return newRoot;
+            }
+
+            // Function to rotate a node to the left
+            rotateLeft(node) {
+                const newRoot = node.right;
+                const newRootLeft = newRoot.left;
+
+                // Perform rotation
+                newRoot.left = node;
+                node.right = newRootLeft;
+
+                // Update heights
+                this.updateHeight(node);
+                this.updateHeight(newRoot);
+
+                return newRoot;
+            }
+
+            // Function to insert a value into the AVL tree
+            insert(value) {
+                this.root = this.insertNode(this.root, value);
+            }
+
+            // Recursive function to insert a value into the AVL tree
+            insertNode(root, value) {
+                // Perform normal BST insertion
+                if (root === null) {
+                    return new Node(value);
+                }
+
+                if (value < root.value) {
+                    root.left = this.insertNode(root.left, value);
+                } else {
+                    root.right = this.insertNode(root.right, value);
+                }
+
+                // Update height of the current node
+                this.updateHeight(root);
+
+                // Check balance factor and perform rotations if necessary
+                const balanceFactor = this.balanceFactor(root);
+
+                if (balanceFactor > 1 && value < root.left.value) {
+                    return this.rotateRight(root);
+                }
+
+                if (balanceFactor < -1 && value > root.right.value) {
+                    return this.rotateLeft(root);
+                }
+
+                if (balanceFactor > 1 && value > root.left.value) {
+                    root.left = this.rotateLeft(root.left);
+                    return this.rotateRight(root);
+                }
+
+                if (balanceFactor < -1 && value < root.right.value) {
+                    root.right = this.rotateRight(root.right);
+                    return this.rotateLeft(root);
+                }
+
+                return root;
+            }
+
+            // Function to draw the AVL tree
+            draw() {
+                this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                this.drawNode(this.root, 400, 50, 200);
+            }
+
+            // Recursive function to draw a node and its children
+            drawNode(node, x, y, spacing) {
+                if (node === null) {
+                    return;
+                }
+
+                this.context.beginPath();
+                this.context.arc(x, y, 20, 0, 2 * Math.PI);
+                this.context.stroke();
+
+                this.context.textAlign = "center";
+                this.context.fillText(node.value, x, y + 5);
+
+                if (node.left !== null) {
+                    this.context.moveTo(x, y + 20);
+                    this.context.lineTo(x - spacing, y + 70);
+                    this.context.stroke();
+                    this.drawNode(node.left, x - spacing, y + 70, spacing / 2);
+                }
+
+                if (node.right !== null) {
+                    this.context.moveTo(x, y + 20);
+                    this.context.lineTo(x + spacing, y + 70);
+                    this.context.stroke();
+                    this.drawNode(node.right, x + spacing, y + 70, spacing / 2);
+                }
+            }
+        }
+
+        // Create an instance of the AVLTreeVisualization class
+        const avlTree = new AVLTreeVisualization();
+
+        // Event handler for form submission
+        document.getElementById("inputForm").addEventListener("submit", function (event) {
+            event.preventDefault();
+
+            const valuesInput = document.getElementById("values");
+            const values = valuesInput.value.split(",").map(value => parseInt(value.trim(), 10));
+
+            // Generate the AVL tree with the user-provided values
+            avlTree.root = null;
+            for (const value of values) {
+                if (!isNaN(value)) {
+                    avlTree.insert(value);
+                }
+            }
+
+            // Draw the AVL tree
+            avlTree.draw();
+
+            // Clear the input field
+            valuesInput.value = "";
+        });
+    </script>
+    <a href="https://hrs420.github.io/cv2/"> Developers's website</a>
+</body>
+</html>
